@@ -1,0 +1,6 @@
+[
+  { "term": "top",   "expected_substring": "top" },
+  { "term": "tshirt", "expected_substring": "tshirt" },
+  { "term": "jeans", "expected_substring": "jeans" },
+  { "term": "dress", "expected_substring": "dress" }
+]

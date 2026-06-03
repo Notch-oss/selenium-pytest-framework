@@ -1,0 +1,14 @@
+[
+  {
+    "case": "wrong_password",
+    "email": "qa.notreal.user@example.com",
+    "password": "definitely-wrong",
+    "expected_error": "Your email or password is incorrect!"
+  },
+  {
+    "case": "unregistered_email",
+    "email": "no.such.account.987654@example.com",
+    "password": "Whatever123",
+    "expected_error": "Your email or password is incorrect!"
+  }
+]
