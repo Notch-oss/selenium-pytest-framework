@@ -79,8 +79,8 @@ Requires Python 3.10+ and Chrome (or Firefox) installed locally. Selenium 4.6+
 ships **Selenium Manager**, so you do **not** need to download a driver binary.
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/Notch-oss/selenium-pytest-framework.git
+cd <selenium-pytest-framework>
 
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
