@@ -1,6 +1,6 @@
 # Selenium + Pytest UI Automation Framework
 
-[![CI](https://github.com/<Notch-oss>/<selenium-pytest-framework>/actions/workflows/ci.yml/badge.svg)](https://github.com/<Notch-oss>/<selenium-pytest-framework>/actions/workflows/ci.yml)
+[![CI](https://github.com/Notch-oss/selenium-pytest-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Notch-oss/selenium-pytest-framework/actions/workflows/ci.yml)
 
 A Page Object Model UI automation framework built with **Selenium 4** and
 **pytest**, exercised against [automationexercise.com](https://automationexercise.com).
