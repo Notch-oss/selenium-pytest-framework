@@ -1,13 +1,11 @@
 # Selenium + Pytest UI Automation Framework
 
-[![CI](https://github.com/<your-username>/<your-repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/<your-repo>/actions/workflows/ci.yml)
+[![CI](https://github.com/<Notch-oss>/<selenium-pytest-framework>/actions/workflows/ci.yml/badge.svg)](https://github.com/<Notch-oss>/<selenium-pytest-framework>/actions/workflows/ci.yml)
 
 A Page Object Model UI automation framework built with **Selenium 4** and
 **pytest**, exercised against [automationexercise.com](https://automationexercise.com).
 Explicit waits only, config-driven, data-driven, with logging,
 screenshot-on-failure, HTML reporting, and GitHub Actions CI.
-
-> Replace `<your-username>/<your-repo>` in the badge URL above after you push.
 
 ---
 
