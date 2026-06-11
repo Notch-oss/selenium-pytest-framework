@@ -126,7 +126,7 @@ All settings are env-overridable (see `.env.example`): `BASE_URL`, `BROWSER`,
 `pytest-html` produces a self-contained report at `reports/report.html`. Open it
 in a browser after a run. Failing tests automatically embed their screenshot.
 
-![pytest-html report](docs/report.html)
+![pytest-html report](docs/report.png)
 
 
 
