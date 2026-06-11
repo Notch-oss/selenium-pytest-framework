@@ -128,10 +128,7 @@ in a browser after a run. Failing tests automatically embed their screenshot.
 
 ![pytest-html report](docs/report.html)
 
-> The screenshot above is from the browserless unit run (`tests/unit`) so it
-> renders cleanly here. After your first local UI run you'll see all eight UI
-> test rows plus any embedded failure screenshots — regenerate the image from
-> your own `reports/report.html` if you want it to reflect the full suite.
+
 
 ---
 
