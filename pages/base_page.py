@@ -21,7 +21,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from config.config import Config
 from utils.logger import get_logger
@@ -98,6 +98,11 @@ class BasePage:
             element.clear()
         element.send_keys(text)
 
+    def select_by_text(self, locator: Locator, text: str,
+                       timeout: Optional[int] = None) -> None:
+        self.log.info("select %r in %s", text, locator)
+        Select(self.find_visible(locator, timeout)).select_by_visible_text(text)
+
     def get_text(self, locator: Locator, timeout: Optional[int] = None) -> str:
         text = self.find_visible(locator, timeout).text
         self.log.info("text of %s = %r", locator, text)
@@ -117,6 +122,18 @@ class BasePage:
             "arguments[0].scrollIntoView({block: 'center'});", element
         )
         return element
+
+    def scroll_to_bottom(self) -> None:
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    def scroll_to_top(self) -> None:
+        self.driver.execute_script("window.scrollTo(0, 0);")
+
+    def wait_for_scroll_top(self, timeout: Optional[int] = None) -> None:
+        """Wait until the viewport has (smoothly) scrolled back to the top."""
+        self._wait(timeout).until(
+            lambda d: d.execute_script("return window.pageYOffset;") < 100
+        )
 
     # --- waits exposed to page objects ------------------------------------
     def wait_for_url_contains(self, fragment: str, timeout: Optional[int] = None) -> bool:

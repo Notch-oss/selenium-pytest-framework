@@ -14,6 +14,11 @@ log = get_logger(__name__)
 
 def _chrome_options() -> ChromeOptions:
     opts = ChromeOptions()
+    # 'eager' = continue at DOMContentLoaded instead of waiting for every ad
+    # iframe to finish loading. The AUT is ad-heavy and slow third-party frames
+    # otherwise stall navigation until the page-load timeout; all real
+    # synchronisation is done via explicit waits anyway.
+    opts.page_load_strategy = "eager"
     if Config.HEADLESS:
         opts.add_argument("--headless=new")
     width, height = Config.WINDOW_SIZE.split(",")
@@ -34,11 +39,28 @@ def _chrome_options() -> ChromeOptions:
     )
     opts.add_experimental_option("excludeSwitches", ["enable-automation"])
     opts.add_experimental_option("useAutomationExtension", False)
+    # The AUT monetises with Google vignette ads that overlay the whole page,
+    # intercepting clicks and freezing scroll. Null-route the ad domains at the
+    # DNS level so the interstitials can never load.
+    ad_hosts = [
+        "pagead2.googlesyndication.com",
+        "googleads.g.doubleclick.net",
+        "securepubads.g.doubleclick.net",
+        "tpc.googlesyndication.com",
+        "www.googletagservices.com",
+        "adservice.google.com",
+        "ep1.adtrafficquality.google",
+        "ep2.adtrafficquality.google",
+        "fundingchoicesmessages.google.com",
+    ]
+    rules = ", ".join(f"MAP {host} 127.0.0.1" for host in ad_hosts)
+    opts.add_argument(f"--host-resolver-rules={rules}")
     return opts
 
 
 def _firefox_options() -> FirefoxOptions:
     opts = FirefoxOptions()
+    opts.page_load_strategy = "eager"
     if Config.HEADLESS:
         opts.add_argument("-headless")
     width, height = Config.WINDOW_SIZE.split(",")

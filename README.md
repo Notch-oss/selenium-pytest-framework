@@ -33,13 +33,24 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 │   └── config.py            # env-driven settings (URL, browser, timeouts, paths)
 ├── pages/
 │   ├── base_page.py         # shared wrappers: click, type, find, waits, alerts
-│   ├── home_page.py
+│   ├── home_page.py         # header/footer (site-wide), categories, carousel
 │   ├── login_page.py
+│   ├── signup_page.py       # account form + created/deleted confirmations
 │   ├── products_page.py
+│   ├── product_detail_page.py
+│   ├── cart_page.py         # cart table + the post-add-to-cart modal
+│   ├── checkout_page.py
+│   ├── payment_page.py
 │   └── contact_page.py
 ├── tests/
-│   ├── test_login.py        # data-driven invalid-login cases
+│   ├── flows.py             # multi-page flows: register, checkout-and-pay
+│   ├── test_register.py
+│   ├── test_login.py        # valid login/logout + data-driven invalid cases
 │   ├── test_search_products.py
+│   ├── test_products.py     # product detail, categories, brands, reviews
+│   ├── test_cart.py
+│   ├── test_checkout.py     # end-to-end order placement
+│   ├── test_navigation.py
 │   ├── test_subscription.py
 │   ├── test_contact_us.py
 │   └── unit/
@@ -49,6 +60,7 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 │   └── search_data.json
 ├── utils/
 │   ├── driver_factory.py    # builds chrome/firefox, headless toggle
+│   ├── user_factory.py      # unique registration data per test run
 │   ├── logger.py
 │   └── data_loader.py
 ├── conftest.py              # driver fixture + screenshot-on-failure hook
@@ -143,12 +155,38 @@ build artifacts. The status badge at the top reflects the latest run.
 
 ## Test coverage
 
-| Test | Type | Scenario |
+The UI suite implements all 26 scenarios from the site's official
+[test cases page](https://automationexercise.com/test_cases) — see
+`docs/test_cases.md` for the full step-by-step reference.
+
+| Test | Type | Scenario (site TC #) |
 |---|---|---|
-| `test_login_with_invalid_credentials` | data-driven | invalid login → error message |
-| `test_search_returns_relevant_products` | data-driven | product search returns relevant results |
-| `test_footer_subscription_shows_success` | smoke | newsletter subscription confirmation |
-| `test_contact_us_form_submission` | regression | contact form submit + JS alert handling |
+| `test_register_new_user` | smoke | full signup, login state, account deletion (1) |
+| `test_register_with_existing_email_shows_error` | regression | duplicate-email signup rejected (5) |
+| `test_login_with_valid_credentials` | smoke | valid login + delete account (2) |
+| `test_login_with_invalid_credentials` | data-driven | invalid login → error message (3) |
+| `test_logout_returns_to_login_page` | smoke | logout drops the session (4) |
+| `test_contact_us_form_submission` | regression | contact form submit + JS alert handling (6) |
+| `test_test_cases_page_is_reachable` | smoke | header navigation (7) |
+| `test_all_products_and_product_detail` | smoke | products list + detail fields (8) |
+| `test_search_returns_relevant_products` | data-driven | product search returns relevant results (9) |
+| `test_footer_subscription_shows_success` | smoke | newsletter subscription on home (10) |
+| `test_subscription_on_cart_page` | smoke | newsletter subscription on cart page (11) |
+| `test_add_products_to_cart` | smoke | two products, prices x quantities = totals (12) |
+| `test_product_quantity_in_cart` | regression | detail-page quantity preserved in cart (13) |
+| `test_place_order_register_while_checkout` | regression | E2E order, signup mid-checkout (14) |
+| `test_place_order_register_before_checkout` | regression | E2E order, signup first (15) |
+| `test_place_order_login_before_checkout` | regression | E2E order, existing account (16) |
+| `test_remove_product_from_cart` | regression | X button empties the cart (17) |
+| `test_view_category_products` | regression | sidebar category navigation (18) |
+| `test_view_brand_products` | regression | sidebar brand navigation (19) |
+| `test_search_products_and_verify_cart_after_login` | regression | guest cart survives login (20) |
+| `test_add_review_on_product` | regression | product review submission (21) |
+| `test_add_to_cart_from_recommended_items` | regression | recommended-items carousel add (22) |
+| `test_address_details_match_registration` | regression | checkout addresses echo signup data (23) |
+| `test_download_invoice_after_purchase` | regression | invoice file actually downloads (24) |
+| `test_scroll_up_with_arrow_button` | regression | scroll-up arrow returns to hero (25) |
+| `test_scroll_up_without_arrow_button` | regression | manual scroll returns to hero (26) |
 | `test_config.*` | unit | config env-override wiring (browserless) |
 
 ---

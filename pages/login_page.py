@@ -21,6 +21,7 @@ class LoginPage(BasePage):
     SIGNUP_ERROR = (By.CSS_SELECTOR, ".signup-form p")
 
     LOGIN_FORM_HEADING = (By.XPATH, "//h2[contains(text(),'Login to your account')]")
+    SIGNUP_FORM_HEADING = (By.XPATH, "//h2[contains(text(),'New User Signup!')]")
 
     def load(self) -> "LoginPage":
         self.open("/login")

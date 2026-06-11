@@ -33,6 +33,34 @@ def driver():
     drv.quit()
 
 
+@pytest.fixture(scope="function")
+def registered_user(driver):
+    """Register a fresh account via the UI, log out, and hand the credentials
+    to the test. Teardown deletes the account best-effort — several test cases
+    (e.g. 'Login User', 'Place Order') delete it themselves as a final step,
+    in which case cleanup is a no-op.
+    """
+    from pages.home_page import HomePage
+    from pages.login_page import LoginPage
+    from tests.flows import delete_account, register_user
+    from utils.user_factory import new_user
+
+    user = new_user()
+    home = register_user(driver, user)
+    home.logout()
+    yield user
+
+    try:
+        home = HomePage(driver)
+        if not home.is_logged_in():
+            login = LoginPage(driver).load()
+            login.login(user["email"], user["password"])
+        if home.is_logged_in():
+            delete_account(driver)
+    except Exception as exc:  # pragma: no cover - defensive cleanup
+        log.warning("Could not clean up account %s: %s", user["email"], exc)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Attach a screenshot to the HTML report whenever a test's call phase fails."""
