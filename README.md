@@ -165,11 +165,3 @@ build artifacts. The status badge at the top reflects the latest run.
 - The unit tests are verified passing. The UI tests are written against the
   site's current DOM and run headless in CI; if a selector breaks, it's a
   one-line fix in `pages/`, not a rewrite.
-
-## Possible extensions
-
-- Swap `pytest-html` for **Allure** for richer reporting (step-level detail,
-  history, trends) — it needs the Allure CLI in CI.
-- Add a cross-browser CI matrix (`chrome` + `firefox`).
-- Add `pytest-xdist` (`pip install pytest-xdist`, run `pytest -n auto`) for
-  parallel execution.
