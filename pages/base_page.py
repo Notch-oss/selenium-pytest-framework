@@ -40,7 +40,26 @@ class BasePage:
         url = Config.BASE_URL.rstrip("/") + "/" + path.lstrip("/") if path else Config.BASE_URL
         self.log.info("Navigating to %s", url)
         self.driver.get(url)
+        self._wait_for_cloudflare()
         return self
+
+    def _wait_for_cloudflare(self, timeout: int = 20) -> None:
+        """Block until Cloudflare's JS challenge page clears.
+
+        automationexercise.com is behind Cloudflare. In CI the challenge page
+        ("Just a moment…") can appear for a few seconds before the real page
+        loads. Waiting here keeps all subsequent waits from timing out against
+        the challenge page instead of the real DOM.
+        """
+        try:
+            self._wait(timeout).until(
+                lambda d: "just a moment" not in d.title.lower()
+                and "checking your browser" not in d.title.lower()
+            )
+        except TimeoutException:
+            self.log.warning(
+                "Cloudflare challenge did not clear within %ds — continuing anyway", timeout
+            )
 
     def current_url(self) -> str:
         return self.driver.current_url

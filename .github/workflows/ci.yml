@@ -37,7 +37,7 @@ jobs:
         run: pytest tests/unit -v
 
       - name: Run UI suite (headless)
-        run: pytest tests -m "smoke or regression" -v
+        run: pytest tests -m "smoke or regression" -v --reruns 2 --reruns-delay 5
 
       - name: Upload HTML report
         if: always()

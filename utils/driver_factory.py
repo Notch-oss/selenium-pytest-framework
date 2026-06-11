@@ -23,8 +23,17 @@ def _chrome_options() -> ChromeOptions:
     opts.add_argument("--disable-dev-shm-usage")
     opts.add_argument("--disable-gpu")
     opts.add_argument("--disable-notifications")
+    # Anti-bot-detection: suppress the automation flags Cloudflare fingerprints.
     opts.add_argument("--disable-blink-features=AutomationControlled")
+    opts.add_argument("--lang=en-US,en;q=0.9")
+    # Headless Chrome injects "HeadlessChrome" into the UA — replace it with a
+    # normal desktop UA so Cloudflare's TLS/UA check sees a real browser.
+    opts.add_argument(
+        "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    )
     opts.add_experimental_option("excludeSwitches", ["enable-automation"])
+    opts.add_experimental_option("useAutomationExtension", False)
     return opts
 
 
@@ -44,6 +53,12 @@ def create_driver() -> webdriver.Remote:
 
     if browser == "chrome":
         driver = webdriver.Chrome(options=_chrome_options())
+        # Mask navigator.webdriver before any page script runs so Cloudflare's
+        # JS challenge cannot detect the automation flag via the property getter.
+        driver.execute_cdp_cmd(
+            "Page.addScriptToEvaluateOnNewDocument",
+            {"source": "Object.defineProperty(navigator,'webdriver',{get:()=>undefined})"},
+        )
     elif browser == "firefox":
         driver = webdriver.Firefox(options=_firefox_options())
     else:
