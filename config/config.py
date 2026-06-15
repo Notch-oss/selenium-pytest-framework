@@ -22,6 +22,13 @@ class Config:
     # Target application under test
     BASE_URL: str = os.getenv("BASE_URL", "https://automationexercise.com")
 
+    # REST API base. Defaults to the site's /api path; override independently
+    # if the API is ever served from a different host.
+    API_BASE_URL: str = os.getenv("API_BASE_URL", f"{BASE_URL}/api")
+
+    # Seconds to wait on any single HTTP API call before giving up.
+    API_TIMEOUT: int = int(os.getenv("API_TIMEOUT", "30"))
+
     # Browser selection: "chrome" or "firefox"
     BROWSER: str = os.getenv("BROWSER", "chrome").lower()
     HEADLESS: bool = _as_bool(os.getenv("HEADLESS", "false"))
@@ -46,6 +53,7 @@ class Config:
     def as_dict(cls) -> dict:
         return {
             "BASE_URL": cls.BASE_URL,
+            "API_BASE_URL": cls.API_BASE_URL,
             "BROWSER": cls.BROWSER,
             "HEADLESS": cls.HEADLESS,
             "WINDOW_SIZE": cls.WINDOW_SIZE,

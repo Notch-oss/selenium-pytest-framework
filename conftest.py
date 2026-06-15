@@ -61,6 +61,62 @@ def registered_user(driver):
         log.warning("Could not clean up account %s: %s", user["email"], exc)
 
 
+@pytest.fixture(scope="function")
+def api():
+    """A ready-to-use AutomationExercise API client with a pooled session.
+
+    Browserless — API tests never request the `driver` fixture, so they run fast
+    and stay green even when the UI target is flaky behind Cloudflare.
+    """
+    from api import AutomationExerciseApiClient
+
+    client = AutomationExerciseApiClient()
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="function")
+def api_account(api):
+    """Create a fresh account via the API, hand its payload to the test, and
+    delete it on teardown. Cleanup is best-effort and idempotent: tests that
+    delete the account themselves (e.g. the deleteAccount case) leave teardown a
+    no-op, since deleting a missing account simply returns 404.
+    """
+    from utils.user_factory import new_api_user
+
+    user = new_api_user()
+    created = api.create_account(user)
+    assert created.response_code == 201, (
+        f"Fixture could not create an account: {created!r}"
+    )
+    yield user
+
+    try:
+        resp = api.delete_account(user["email"], user["password"])
+        if resp.response_code not in (200, 404):
+            log.warning("Unexpected cleanup response for %s: %s", user["email"], resp)
+    except Exception as exc:  # pragma: no cover - defensive cleanup
+        log.warning("Could not clean up API account %s: %s", user["email"], exc)
+
+
+@pytest.fixture(scope="function")
+def disposable_api_user(api):
+    """Hand a test a fresh, *uncreated* API registration payload and guarantee
+    the account is gone afterwards. Lets the create/delete tests own the
+    create/delete calls themselves while teardown still cleans up an account the
+    test left behind (deleting a missing account is a harmless 404).
+    """
+    from utils.user_factory import new_api_user
+
+    user = new_api_user()
+    yield user
+
+    try:
+        api.delete_account(user["email"], user["password"])
+    except Exception as exc:  # pragma: no cover - defensive cleanup
+        log.warning("Could not clean up API account %s: %s", user["email"], exc)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Attach a screenshot to the HTML report whenever a test's call phase fails."""

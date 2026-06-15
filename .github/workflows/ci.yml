@@ -36,6 +36,9 @@ jobs:
       - name: Run unit tests (browserless)
         run: pytest tests/unit -v
 
+      - name: Run API tests (browserless)
+        run: pytest tests/test_api.py -m api -v --reruns 2 --reruns-delay 3
+
       - name: Run UI suite (headless)
         run: pytest tests -m "smoke or regression" -v --reruns 2 --reruns-delay 5
 

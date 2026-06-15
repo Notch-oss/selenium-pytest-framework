@@ -7,6 +7,10 @@ A Page Object Model UI automation framework built with **Selenium 4** and
 Explicit waits only, config-driven, data-driven, with logging,
 screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 
+It also ships a **REST API test layer** (`requests`-based) covering all 14
+endpoints from the site's [API list](https://automationexercise.com/api_list) —
+see [API tests](#api-tests).
+
 ---
 
 ## What this demonstrates
@@ -21,6 +25,7 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 | Logging (no `print`) | `utils/logger.py` |
 | Screenshot on failure | `pytest_runtest_makereport` hook in `conftest.py` |
 | HTML reporting | `pytest-html` → `reports/report.html` |
+| REST API testing layer (all 14 site APIs) | `api/`, `tests/test_api.py` |
 | CI on every push, headless | `.github/workflows/ci.yml` |
 
 ---
@@ -31,6 +36,9 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 .
 ├── config/
 │   └── config.py            # env-driven settings (URL, browser, timeouts, paths)
+├── api/                     # REST API client layer (mirrors the POM idea)
+│   ├── base_client.py       # HTTP session, retries, timeout, ApiResponse wrapper
+│   └── automation_exercise_api.py  # one method per documented endpoint (API 1-14)
 ├── pages/
 │   ├── base_page.py         # shared wrappers: click, type, find, waits, alerts
 │   ├── home_page.py         # header/footer (site-wide), categories, carousel
@@ -53,14 +61,16 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
 │   ├── test_navigation.py
 │   ├── test_subscription.py
 │   ├── test_contact_us.py
+│   ├── test_api.py          # all 14 REST API cases (browserless)
 │   └── unit/
 │       └── test_config.py   # browserless — verifies config wiring in CI
 ├── data/
 │   ├── login_data.json
-│   └── search_data.json
+│   ├── search_data.json
+│   └── api_search_data.json # data-driven cases for the API search test
 ├── utils/
 │   ├── driver_factory.py    # builds chrome/firefox, headless toggle
-│   ├── user_factory.py      # unique registration data per test run
+│   ├── user_factory.py      # unique registration data (UI + API payloads)
 │   ├── logger.py
 │   └── data_loader.py
 ├── conftest.py              # driver fixture + screenshot-on-failure hook
@@ -82,6 +92,14 @@ screenshot-on-failure, HTML reporting, and GitHub Actions CI.
   `conftest.py` if you want to trade isolation for speed.
 - **No implicit wait is set.** Mixing implicit and explicit waits causes
   unpredictable timeouts, so all synchronisation is explicit.
+- **The API layer mirrors the POM split.** `BaseApiClient` owns HTTP mechanics
+  (pooled session, connection retries, timeout, logging) the way `BasePage` owns
+  synchronisation; `AutomationExerciseApiClient` exposes intent (`search_product`,
+  `verify_login`, …) the way page objects expose verbs. Tests never touch
+  `requests` directly. The API returns transport `200` for *everything* and puts
+  the real code in the body's `responseCode`, so `ApiResponse.response_code`
+  centralises that quirk in one place — see
+  [docs/api_test_cases.md](docs/api_test_cases.md).
 
 ---
 
@@ -120,6 +138,9 @@ pytest -m smoke
 
 # A single file
 pytest tests/test_login.py -v
+
+# Only the REST API tests (browserless — no Chrome/Firefox needed)
+pytest -m api
 ```
 
 All settings are env-overridable (see `.env.example`): `BASE_URL`, `BROWSER`,
@@ -148,8 +169,9 @@ in a browser after a run. Failing tests automatically embed their screenshot.
 
 `.github/workflows/ci.yml` runs on every push and PR to `main`/`master`:
 installs dependencies, sets up Chrome, runs the browserless unit tests, then the
-UI suite headless, and uploads the HTML report and any failure screenshots as
-build artifacts. The status badge at the top reflects the latest run.
+browserless API tests, then the UI suite headless, and uploads the HTML report
+and any failure screenshots as build artifacts. The status badge at the top
+reflects the latest run.
 
 ---
 
@@ -157,7 +179,10 @@ build artifacts. The status badge at the top reflects the latest run.
 
 The UI suite implements all 26 scenarios from the site's official
 [test cases page](https://automationexercise.com/test_cases) — see
-`docs/test_cases.md` for the full step-by-step reference.
+`docs/test_cases.md` for the full step-by-step reference. The REST API suite
+implements all 14 endpoints from the official
+[API list](https://automationexercise.com/api_list) — see the
+[API tests](#api-tests) section and `docs/api_test_cases.md`.
 
 | Test | Type | Scenario (site TC #) |
 |---|---|---|
@@ -188,6 +213,34 @@ The UI suite implements all 26 scenarios from the site's official
 | `test_scroll_up_with_arrow_button` | regression | scroll-up arrow returns to hero (25) |
 | `test_scroll_up_without_arrow_button` | regression | manual scroll returns to hero (26) |
 | `test_config.*` | unit | config env-override wiring (browserless) |
+
+---
+
+## API tests
+
+`tests/test_api.py` covers **all 14 endpoints** from the site's official
+[API list](https://automationexercise.com/api_list), driven through
+`api/automation_exercise_api.py`. They are **browserless** (`requests` only), so
+they run in seconds and stay green even when the UI target is flaky behind
+Cloudflare. Run them with `pytest -m api`. Full step reference:
+[docs/api_test_cases.md](docs/api_test_cases.md).
+
+| Test | API # | Method + endpoint | Asserts |
+|---|---|---|---|
+| `test_api_01_get_all_products_list` | 1 | GET `/productsList` | 200, non-empty `products` |
+| `test_api_02_post_to_all_products_list_not_supported` | 2 | POST `/productsList` | 405, "method not supported" |
+| `test_api_03_get_all_brands_list` | 3 | GET `/brandsList` | 200, non-empty `brands` |
+| `test_api_04_put_to_all_brands_list_not_supported` | 4 | PUT `/brandsList` | 405, "method not supported" |
+| `test_api_05_search_product` | 5 | POST `/searchProduct` | 200, results match term (data-driven ×4) |
+| `test_api_06_search_product_without_param` | 6 | POST `/searchProduct` | 400, "search_product missing" |
+| `test_api_07_verify_login_valid` | 7 | POST `/verifyLogin` | 200, "User exists!" |
+| `test_api_08_verify_login_without_email` | 8 | POST `/verifyLogin` | 400, "email or password missing" |
+| `test_api_09_verify_login_delete_not_supported` | 9 | DELETE `/verifyLogin` | 405, "method not supported" |
+| `test_api_10_verify_login_invalid` | 10 | POST `/verifyLogin` | 404, "User not found!" |
+| `test_api_11_create_account` | 11 | POST `/createAccount` | 201, "User created!" + verify exists |
+| `test_api_12_delete_account` | 12 | DELETE `/deleteAccount` | 200, "Account deleted!" + verify gone |
+| `test_api_13_update_account` | 13 | PUT `/updateAccount` | 200, "User updated!" + change persists |
+| `test_api_14_get_user_detail_by_email` | 14 | GET `/getUserDetailByEmail` | 200, `user` matches created data |
 
 ---
 
